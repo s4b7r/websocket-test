@@ -101,6 +101,8 @@ async def websocket_endpoint(websocket):
     if len(connection) == 0:
         del connections[connection_id]
     await websocket.close()
+    for ws in connection:
+        await ws.send_text(f'{websocket} left connection {connection_id}')
 
 
 @app.websocket_route('/ws/')
@@ -120,6 +122,8 @@ async def websocket_endpoint(websocket):
     if len(connection) == 0:
         del connections[connection_id]
     await websocket.close()
+    for ws in connection:
+        await ws.send_text(f'{websocket} left connection {connection_id}')
 
 
 if __name__ == '__main__':

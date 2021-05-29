@@ -4,7 +4,7 @@
 
 from starlette.applications import Starlette
 from starlette.responses import HTMLResponse
-from starlette.websockets import WebSocket
+from starlette.websockets import WebSocket, WebSocketDisconnect
 from jinja2 import Template
 import uvicorn
 
@@ -16,13 +16,14 @@ template = """\
     <script type = "text/javascript">
         function runWebsockets() {
             if ("WebSocket" in window) {
-                var ws = new WebSocket("ws://localhost:8000/ws");
+                var connection_id = String(prompt("connection_id?", "nope"));
+                var ws = new WebSocket("ws://localhost:8000/ws/" + connection_id);
                 ws.onopen = function() {
-                    console.log("Sending websocket data");
+                    console.log("Sending websocket data with connection_id " + connection_id);
                     ws.send("Hello From Client");
                 };
                 ws.onmessage = function(e) { 
-                    alert(e.data);
+                    console.log(e.data);
                 };
                 ws.onclose = function() { 
                     console.log("Closing websocket connection");
@@ -40,21 +41,33 @@ template = """\
 
 app = Starlette()
 
+connections = {}
+
 
 @app.route('/')
 async def homepage(request):
     return HTMLResponse(Template(template).render())
 
 
-@app.websocket_route('/ws')
+@app.websocket_route('/ws/{connection_id}')
 async def websocket_endpoint(websocket):
+    connection_id = websocket.path_params.get('connection_id')
     await websocket.accept()
-    # Process incoming messages
-    while True:
-        mesg = await websocket.receive_text()
-        await websocket.send_text(mesg.replace("Client", "Server"))
+    _ = await websocket.receive_text()
+    connections[connection_id] = websocket
+    for ws in connections.values():
+        print(f'waiting for {ws}...')
+        await ws.send_text(f'New connection to server with id {connection_id}')
+        print('fin wait')
+    print(connections)
+    try:
+        while True:
+            _ = await websocket.receive_text()
+    except WebSocketDisconnect:
+        pass
+    del connections[connection_id]
     await websocket.close()
 
 
 if __name__ == '__main__':
-    uvicorn.run(app, host='0.0.0.0', port=8000)
+    uvicorn.run('starwebsock:app', host='0.0.0.0', port=8000, reload=True)

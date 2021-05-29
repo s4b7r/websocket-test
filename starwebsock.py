@@ -16,27 +16,59 @@ template = """\
 <html>
 <head>
     <script type = "text/javascript">
-        function runWebsockets() {
-            if ("WebSocket" in window) {
-                var connection_id = String(prompt("connection_id?", ""));
-                var ws = new WebSocket("ws://localhost:8000/ws/" + connection_id);
-                ws.onopen = function() {
-                    console.log("Sending websocket data with connection_id " + connection_id);
-                    ws.send("Hello From Client");
-                };
-                ws.onmessage = function(e) { 
-                    console.log(e.data);
-                };
-                ws.onclose = function() { 
-                    console.log("Closing websocket connection");
-                };
-            } else {
-                alert("WS not supported, sorry!");
-            }
+
+
+        const createSocket = (connection_url) => {
+            const socket = new WebSocket(connection_url);
+            
+            socket.onopen = (event) => {
+                document.getElementById('status').textContent = `Connected`;
+            };
+            socket.onmessage = (event) => {
+                console.log(event.data);
+                document.getElementById('connection_id').value = event.data;
+            };
+            socket.onclose = function() { 
+                console.log("Closing websocket connection");
+                document.getElementById('status').textContent = `Disconnected`;
+            };
+
+            window.addEventListener('unload', (event) => socket.close());
+
+            return socket;
         }
+
+        const disconnectSocket = (socket) => {
+            socket.close();
+            document.getElementById('status').textContent = `Disconnected`;
+        };
+
+        document.addEventListener("DOMContentLoaded", () => {
+            let socket;
+
+            const form = document.getElementById('connect_form');
+            form.addEventListener('submit', (event) => {
+                event.preventDefault();
+                if (socket) {
+                    disconnectSocket(socket);
+                }
+                socket = createSocket("ws://localhost:8000/ws/" + String(document.getElementById('connection_id').value));;
+            });
+
+            const disconnectButton = document.getElementById('disconnect_button');
+            disconnectButton.addEventListener('click', () => disconnectSocket(socket));
+        });
     </script>
 </head>
-<body><a href="javascript:runWebsockets()">Say Hello From Client</a></body>
+<body>
+<a href="javascript:runWebsockets()">Say Hello From Client</a><br>
+<h1>Status: <span id="status">Disconnected</span></h1>
+<form id="connect_form">
+    <input type="text" id="connection_id" placeholder="connection_id" style="width: 500px;" /><br>
+    <button type="submit">Connect</button>
+    <button type="button" id="disconnect_button">Disconnect</button>
+</form>
+</body>
 </html>
 """
 
@@ -58,7 +90,6 @@ async def websocket_endpoint(websocket):
     await websocket.accept()
     connection = connections.get(connection_id)
     connection.append(websocket)
-    _ = await websocket.receive_text()
     for ws in connection:
         await ws.send_text(f'New {websocket} to connection {connection_id}')
     try:
@@ -79,7 +110,6 @@ async def websocket_endpoint(websocket):
     await websocket.accept()
     connection = [websocket]
     connections[connection_id] = connection
-    _ = await websocket.receive_text()
     await websocket.send_text(f'You are {websocket} with new connection {connection_id}')
     try:
         while True:

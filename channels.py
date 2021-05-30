@@ -3,9 +3,10 @@ from uuid import uuid4
 
 
 class Channel:
-    def __init__(self, channels_list):
+    def __init__(self, channels_list, id=None):
         self.socks = []
         self.parent = channels_list
+        self.id = id
 
     async def send_to_channel(self, text):
         sends = []
@@ -30,15 +31,13 @@ class Channel:
 
     @staticmethod
     def get_new_channel(channels_list):
-        channel = Channel(channels_list)
-        channels_list[str(uuid4())] = channel
+        id = str(uuid4())
+        channel = Channel(channels_list, id=id)
+        channels_list[id] = channel
         return channel
 
     def get_channel_id(self):
-        for id, chan in self.parent.items():
-            if chan == self:
-                return id
-        raise RuntimeError(f'Did not find that channel in channels dict')
+        return self.id
 
     def add_sock_to_channel(self, websocket):
         self.socks.append(websocket)

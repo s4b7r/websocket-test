@@ -91,10 +91,10 @@ async def homepage(request):
 async def websocket_endpoint(websocket):
     channel_id = websocket.path_params.get('channel_id')
     channel = channels.get(channel_id)
-    print(f'New {websocket} to {channel_id}')
+    print(f'New {websocket} to {channel}')
     await websocket.accept()
     channel.add_sock_to_channel(websocket)
-    await channel.send_to_channel(f'New {websocket} to channel {channel_id}')
+    await channel.send_to_channel(f'New {websocket} to {channel}')
     await sock_receive_loop(websocket, channel)
 
 
@@ -102,10 +102,10 @@ async def websocket_endpoint(websocket):
 async def websocket_endpoint(websocket):
     channel = Channel.get_new_channel(channels)
     channel_id = channel.get_channel_id()
-    print(f'New channel {channel_id} from {websocket}')
+    print(f'New {channel} from {websocket}')
     await websocket.accept()
     channel.add_sock_to_channel(websocket)
-    await websocket.send_text(f'You are {websocket} with new channel {channel_id}')
+    await websocket.send_text(f'You are {websocket} with new {channel}')
     await sock_receive_loop(websocket, channel)
 
 

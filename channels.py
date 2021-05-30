@@ -41,3 +41,6 @@ class Channel:
 
     def add_sock_to_channel(self, websocket):
         self.socks.append(websocket)
+
+    def __repr__(self) -> str:
+        return f'channel {self.id}'

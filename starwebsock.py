@@ -10,6 +10,7 @@ from jinja2 import Template
 import uvicorn
 from uuid import uuid4
 import asyncio
+import starlette
 
 
 template = """\
@@ -91,6 +92,22 @@ async def send_to_connection(connection, text):
     return asyncio.gather(*sends)
 
 
+async def remove_sock_from_connection(connection, websocket):
+    connection.remove(websocket)
+
+    if len(connection) == 0:
+        for connid, conn in connections.items():
+            if conn == connection:
+                break
+        else:
+            raise RuntimeError()
+        del connections[connid]
+    
+    close = websocket.close()
+    send = send_to_connection(connection, f'{websocket} left your connection')
+    return asyncio.gather(close, send, return_exceptions=True)
+
+
 @app.websocket_route('/ws/{connection_id}')
 async def websocket_endpoint(websocket):
     connection_id = websocket.path_params.get('connection_id')
@@ -99,16 +116,13 @@ async def websocket_endpoint(websocket):
     connection = connections.get(connection_id)
     connection.append(websocket)
     await send_to_connection(connection, f'New {websocket} to connection {connection_id}')
+    
     try:
         while True:
             _ = await websocket.receive_text()
     except WebSocketDisconnect:
         pass
-    connection.remove(websocket)
-    if len(connection) == 0:
-        del connections[connection_id]
-    await websocket.close()
-    await send_to_connection(connection, f'{websocket} left connection {connection_id}')
+    await remove_sock_from_connection(connection, websocket)
 
 
 @app.websocket_route('/ws/')
@@ -119,16 +133,13 @@ async def websocket_endpoint(websocket):
     connection = [websocket]
     connections[connection_id] = connection
     await websocket.send_text(f'You are {websocket} with new connection {connection_id}')
+    
     try:
         while True:
             _ = await websocket.receive_text()
     except WebSocketDisconnect:
         pass
-    connection.remove(websocket)
-    if len(connection) == 0:
-        del connections[connection_id]
-    await websocket.close()
-    await send_to_connection(connection, f'{websocket} left connection {connection_id}')
+    await remove_sock_from_connection(connection, websocket)
 
 
 if __name__ == '__main__':

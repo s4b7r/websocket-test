@@ -2,6 +2,7 @@ from uuid import uuid4
 from starlette.websockets import WebSocketDisconnect
 import json
 from channels import Channel
+import warnings
 
 
 class Client:
@@ -14,8 +15,19 @@ class Client:
     def websocket(self):
         return self.sock
 
-    async def init_id(self):
-        self.id = str(uuid4())
+    def init_id(self, id=None):
+        if id is not None:
+            return self.init_known_id(id)
+        if id is None:
+            return self.init_new_id()
+        raise RuntimeError('How did that happen!?')
+    
+    def init_new_id(self):
+        id = str(uuid4())
+        return self.init_known_id(id)
+
+    async def init_known_id(self, id):
+        self.id = id
         print(f'New {self}')
         await self.sock.send_json({'k': 'your_client_id', 'v': self.id})
 

@@ -70,7 +70,9 @@ template = """\
                 if (socket) {
                     disconnectSocket(socket);
                 }
-                socket = createSocket("ws://localhost:8000/ws/" + String(document.getElementById('channel_id').value));;
+                var channel_id = String(document.getElementById('channel_id').value);
+                var client_id = String(document.getElementById('your_client_id').value);
+                socket = createSocket("ws://localhost:8000/ws/" + channel_id + "/" + client_id);;
             });
             const sendChoiceButton = document.getElementById('send_choice');
             sendChoiceButton.addEventListener('click', () => sendChoice(socket));
@@ -107,7 +109,19 @@ async def homepage(request):
     return HTMLResponse(Template(template).render())
 
 
-@app.websocket_route('/ws/{channel_id}')
+@app.websocket_route('/ws/{channel_id}/{client_id}')
+async def websocket_endpoint(websocket):
+    known_id = websocket.path_params.get('client_id')
+    client = await client_init(websocket, known_id)
+
+    channel_id = websocket.path_params.get('channel_id')
+    channel = channels.get(channel_id)
+
+    await client.assign_channel(channel)
+    await client.receive_loop()
+
+
+@app.websocket_route('/ws/{channel_id}/')
 async def websocket_endpoint(websocket):
     client = await client_init(websocket)
 
@@ -118,7 +132,7 @@ async def websocket_endpoint(websocket):
     await client.receive_loop()
 
 
-@app.websocket_route('/ws/')
+@app.websocket_route('/ws//')
 async def websocket_endpoint(websocket):
     client = await client_init(websocket)
     
@@ -128,10 +142,10 @@ async def websocket_endpoint(websocket):
     await client.receive_loop()
 
 
-async def client_init(websocket):
+async def client_init(websocket, known_id=None):
     await websocket.accept()
     client = Client(websocket)
-    await client.init_id()
+    await client.init_id(id=known_id)
     return client
 
 

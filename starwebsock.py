@@ -20,18 +20,18 @@ template = """\
     <script type = "text/javascript">
 
 
-        const createSocket = (connection_url) => {
-            const socket = new WebSocket(connection_url);
+        const createSocket = (channel_url) => {
+            const socket = new WebSocket(channel_url);
             
             socket.onopen = (event) => {
                 document.getElementById('status').textContent = `Connected`;
             };
             socket.onmessage = (event) => {
                 console.log(event.data);
-                document.getElementById('connection_id').value = event.data;
+                document.getElementById('channel_id').value = event.data;
             };
             socket.onclose = function() { 
-                console.log("Closing websocket connection");
+                console.log("Closing websocket channel");
                 document.getElementById('status').textContent = `Disconnected`;
             };
 
@@ -54,7 +54,7 @@ template = """\
                 if (socket) {
                     disconnectSocket(socket);
                 }
-                socket = createSocket("ws://localhost:8000/ws/" + String(document.getElementById('connection_id').value));;
+                socket = createSocket("ws://localhost:8000/ws/" + String(document.getElementById('channel_id').value));;
             });
 
             const disconnectButton = document.getElementById('disconnect_button');
@@ -66,7 +66,7 @@ template = """\
 <a href="javascript:runWebsockets()">Say Hello From Client</a><br>
 <h1>Status: <span id="status">Disconnected</span></h1>
 <form id="connect_form">
-    <input type="text" id="connection_id" placeholder="connection_id" style="width: 500px;" /><br>
+    <input type="text" id="channel_id" placeholder="channel_id" style="width: 500px;" /><br>
     <button type="submit">Connect</button>
     <button type="button" id="disconnect_button">Disconnect</button>
 </form>
@@ -77,7 +77,7 @@ template = """\
 
 app = Starlette()
 
-connections = {}
+channels = {}
 
 
 @app.route('/')
@@ -85,61 +85,61 @@ async def homepage(request):
     return HTMLResponse(Template(template).render())
 
 
-async def send_to_connection(connection, text):
+async def send_to_channel(channel, text):
     sends = []
-    for ws in connection:
+    for ws in channel:
         sends.append(ws.send_text(text))
     return asyncio.gather(*sends)
 
 
-async def remove_sock_from_connection(connection, websocket):
-    connection.remove(websocket)
+async def remove_sock_from_channel(channel, websocket):
+    channel.remove(websocket)
 
-    if len(connection) == 0:
-        for connid, conn in connections.items():
-            if conn == connection:
+    if len(channel) == 0:
+        for connid, conn in channels.items():
+            if conn == channel:
                 break
         else:
             raise RuntimeError()
-        del connections[connid]
+        del channels[connid]
     
     close = websocket.close()
-    send = send_to_connection(connection, f'{websocket} left your connection')
+    send = send_to_channel(channel, f'{websocket} left your channel')
     return asyncio.gather(close, send, return_exceptions=True)
 
 
-@app.websocket_route('/ws/{connection_id}')
+@app.websocket_route('/ws/{channel_id}')
 async def websocket_endpoint(websocket):
-    connection_id = websocket.path_params.get('connection_id')
-    print(f'New {websocket} to {connection_id}')
+    channel_id = websocket.path_params.get('channel_id')
+    print(f'New {websocket} to {channel_id}')
     await websocket.accept()
-    connection = connections.get(connection_id)
-    connection.append(websocket)
-    await send_to_connection(connection, f'New {websocket} to connection {connection_id}')
+    channel = channels.get(channel_id)
+    channel.append(websocket)
+    await send_to_channel(channel, f'New {websocket} to channel {channel_id}')
     
     try:
         while True:
             _ = await websocket.receive_text()
     except WebSocketDisconnect:
         pass
-    await remove_sock_from_connection(connection, websocket)
+    await remove_sock_from_channel(channel, websocket)
 
 
 @app.websocket_route('/ws/')
 async def websocket_endpoint(websocket):
-    connection_id = str(uuid4())
-    print(f'New connection {connection_id} from {websocket}')
+    channel_id = str(uuid4())
+    print(f'New channel {channel_id} from {websocket}')
     await websocket.accept()
-    connection = [websocket]
-    connections[connection_id] = connection
-    await websocket.send_text(f'You are {websocket} with new connection {connection_id}')
+    channel = [websocket]
+    channels[channel_id] = channel
+    await websocket.send_text(f'You are {websocket} with new channel {channel_id}')
     
     try:
         while True:
             _ = await websocket.receive_text()
     except WebSocketDisconnect:
         pass
-    await remove_sock_from_connection(connection, websocket)
+    await remove_sock_from_channel(channel, websocket)
 
 
 if __name__ == '__main__':

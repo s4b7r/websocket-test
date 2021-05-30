@@ -37,6 +37,8 @@ template = """\
                     document.getElementById('your_client_id').value = msg.v;
                 } else if (msg.k ==="your_channel_id" ) {
                     document.getElementById('channel_id').value = msg.v;
+                } else if (msg.k === "their_choice") {
+                    document.getElementById('their_choice').value = msg.v.their_choice;
                 }
             };
             socket.onclose = function() { 
@@ -54,6 +56,11 @@ template = """\
             document.getElementById('status').textContent = `Disconnected`;
         };
 
+        const sendChoice = (socket) => {
+            var my_choice = document.getElementById('your_choice').value;
+            socket.send(JSON.stringify({'k': 'my_choice', 'v': my_choice}));
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             let socket;
 
@@ -65,6 +72,8 @@ template = """\
                 }
                 socket = createSocket("ws://localhost:8000/ws/" + String(document.getElementById('channel_id').value));;
             });
+            const sendChoiceButton = document.getElementById('send_choice');
+            sendChoiceButton.addEventListener('click', () => sendChoice(socket));
 
             const disconnectButton = document.getElementById('disconnect_button');
             disconnectButton.addEventListener('click', () => disconnectSocket(socket));
@@ -72,16 +81,16 @@ template = """\
     </script>
 </head>
 <body>
-<a href="javascript:runWebsockets()">Say Hello From Client</a><br>
 <h1>Status: <span id="status">Disconnected</span></h1>
 <form id="connect_form">
     <input type="text" id="channel_id" placeholder="channel_id" style="width: 500px;" /><br>
     <input type="text" id="your_client_id" placeholder="client id" style="width: 500px;" /><br>
     <input type="text" id="your_choice" placeholder="your choice" style="width: 500px;" /><br>
-    <input type="text" id="their_choide" placeholder="<their choice>" readonly style="width: 500px;" /><br>
+    <input type="text" id="their_choice" placeholder="<their choice>" readonly style="width: 500px;" /><br>
     <input type="text" id="last_message" placeholder="<last message>" readonly style="width: 500px;" /><br>
     <button type="submit">Connect</button>
     <button type="button" id="disconnect_button">Disconnect</button>
+    <button type="button" id="send_choice">Send choice</button>
 </form>
 </body>
 </html>
@@ -100,37 +109,30 @@ async def homepage(request):
 
 @app.websocket_route('/ws/{channel_id}')
 async def websocket_endpoint(websocket):
-    await websocket.accept()
-    client = Client(websocket)
-    await client.init_id()
-    
+    client = await client_init(websocket)
+
     channel_id = websocket.path_params.get('channel_id')
     channel = channels.get(channel_id)
-    channel.add_sock_to_channel(websocket)
+
     await client.assign_channel(channel)
-    
-    await sock_receive_loop(websocket, channel)
+    await client.receive_loop()
 
 
 @app.websocket_route('/ws/')
 async def websocket_endpoint(websocket):
+    client = await client_init(websocket)
+    
+    channel = Channel.get_new_channel(channels)
+
+    await client.assign_channel(channel)
+    await client.receive_loop()
+
+
+async def client_init(websocket):
     await websocket.accept()
     client = Client(websocket)
     await client.init_id()
-    
-    channel = Channel.get_new_channel(channels)
-    channel.add_sock_to_channel(websocket)
-    await client.assign_channel(channel)
-    await sock_receive_loop(websocket, channel)
-
-
-async def sock_receive_loop(websocket, channel):
-    try:
-        while True:
-            _ = await websocket.receive_text()
-    except WebSocketDisconnect:
-        pass
-    await channel.remove_sock_from_channel(websocket)
+    return client
 
 
 if __name__ == '__main__':

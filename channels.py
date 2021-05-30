@@ -8,10 +8,19 @@ class Channel:
         self.parent = channels_list
         self.id = id
 
-    async def send_to_channel(self, text):
+    async def send_to_channel_json(self, json):
         sends = []
         for ws in self.socks:
-            sends.append(ws.send_text(text))
+            sends.append(ws.websocket.send_json(json))
+        return asyncio.gather(*sends)
+
+    async def send_to_channel(self, text):
+        return self.send_to_channel_text(text)
+
+    async def send_to_channel_text(self, text):
+        sends = []
+        for ws in self.socks:
+            sends.append(ws.websocket.send_text(text))
         return asyncio.gather(*sends)
 
     async def remove_sock_from_channel(self, websocket):
@@ -25,7 +34,7 @@ class Channel:
                 raise RuntimeError()
             del self.parent[chanid]
         
-        close = websocket.close()
+        close = websocket.websocket.close()
         send = self.send_to_channel(f'{websocket} left {self}')
         return asyncio.gather(close, send, return_exceptions=True)
 
@@ -40,9 +49,10 @@ class Channel:
     def get_channel_id(self):
         return self.id
 
-    def add_sock_to_channel(self, websocket):
+    async def add_sock_to_channel(self, websocket):
         self.socks.append(websocket)
         print(f'{self} got new {websocket}')
+        await self.send_to_channel_json({'k': 'client_joined_channel', 'v': websocket.to_json()})
 
     def __repr__(self) -> str:
         return f'channel {self.id}'

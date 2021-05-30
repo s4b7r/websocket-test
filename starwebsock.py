@@ -95,13 +95,7 @@ async def websocket_endpoint(websocket):
     await websocket.accept()
     channel.add_sock_to_channel(websocket)
     await channel.send_to_channel(f'New {websocket} to channel {channel_id}')
-    
-    try:
-        while True:
-            _ = await websocket.receive_text()
-    except WebSocketDisconnect:
-        pass
-    await channel.remove_sock_from_channel(websocket)
+    await sock_receive_loop(websocket, channel)
 
 
 @app.websocket_route('/ws/')
@@ -112,7 +106,10 @@ async def websocket_endpoint(websocket):
     await websocket.accept()
     channel.add_sock_to_channel(websocket)
     await websocket.send_text(f'You are {websocket} with new channel {channel_id}')
-    
+    await sock_receive_loop(websocket, channel)
+
+
+async def sock_receive_loop(websocket, channel):
     try:
         while True:
             _ = await websocket.receive_text()

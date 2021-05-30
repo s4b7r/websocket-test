@@ -43,16 +43,16 @@ class Client:
         except ChannelFullError:
             await self.sock.send_json({'k': 'channel_full', 'v': self.id})
     
+    async def handle_my_choice(self, msgj):
+        print(f'handling choice of {self}')
+        await self.channel.set_choice(self, msgj['v'])
+
     async def receive_handler(self, msg):
         print(f'From {self} received {msg}')
         await self.sock.send_json({'k': 'ack', 'v': msg})
         msgj = msg if isinstance(msg, dict) else json.loads(msg)
         if msgj['k'] == 'my_choice':
-            await self.channel.send_to_channel_json({'k': 'their_choice', 'v': {
-                                                                                'their_client': self.id,
-                                                                                'their_choice': msgj['v']
-                                                                                }
-                                                    })
+            return await self.handle_my_choice(msgj)
 
     async def receive_loop(self):
         while True:

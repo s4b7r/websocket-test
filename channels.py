@@ -27,12 +27,7 @@ class Channel:
         self.socks.remove(websocket)
 
         if len(self.socks) == 0:
-            for chanid, chan in self.parent.items():
-                if chan == self:
-                    break
-            else:
-                raise RuntimeError()
-            del self.parent[chanid]
+            del self.parent[self.id]
         
         close = websocket.websocket.close()
         send = self.send_to_channel(f'{websocket} left {self}')

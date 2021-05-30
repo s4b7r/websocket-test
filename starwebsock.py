@@ -12,6 +12,8 @@ from uuid import uuid4
 import asyncio
 import starlette
 
+from channels import Channel
+
 
 template = """\
 <!DOCTYPE HTML>
@@ -85,70 +87,30 @@ async def homepage(request):
     return HTMLResponse(Template(template).render())
 
 
-async def send_to_channel(channel, text):
-    sends = []
-    for ws in channel:
-        sends.append(ws.send_text(text))
-    return asyncio.gather(*sends)
-
-
-async def remove_sock_from_channel(channel, websocket):
-    channel.remove(websocket)
-
-    if len(channel) == 0:
-        for connid, conn in channels.items():
-            if conn == channel:
-                break
-        else:
-            raise RuntimeError()
-        del channels[connid]
-    
-    close = websocket.close()
-    send = send_to_channel(channel, f'{websocket} left your channel')
-    return asyncio.gather(close, send, return_exceptions=True)
-
-
 @app.websocket_route('/ws/{channel_id}')
 async def websocket_endpoint(websocket):
     channel_id = websocket.path_params.get('channel_id')
     channel = channels.get(channel_id)
     print(f'New {websocket} to {channel_id}')
     await websocket.accept()
-    add_sock_to_channel(channel, websocket)
-    await send_to_channel(channel, f'New {websocket} to channel {channel_id}')
+    channel.add_sock_to_channel(websocket)
+    await channel.send_to_channel(f'New {websocket} to channel {channel_id}')
     
     try:
         while True:
             _ = await websocket.receive_text()
     except WebSocketDisconnect:
         pass
-    await remove_sock_from_channel(channel, websocket)
-
-
-def get_new_channel():
-    channel = []
-    channels[str(uuid4())] = channel
-    return channel
-
-
-def get_channel_id(channel):
-    for id, chan in channels.items():
-        if chan == channel:
-            return id
-    raise RuntimeError(f'Did not find that channel in channels dict')
-
-
-def add_sock_to_channel(channel, websocket):
-    channel.append(websocket)
+    await channel.remove_sock_from_channel(websocket)
 
 
 @app.websocket_route('/ws/')
 async def websocket_endpoint(websocket):
-    channel = get_new_channel()
-    channel_id = get_channel_id(channel)
+    channel = Channel.get_new_channel(channels)
+    channel_id = channel.get_channel_id()
     print(f'New channel {channel_id} from {websocket}')
     await websocket.accept()
-    add_sock_to_channel(channel, websocket)
+    channel.add_sock_to_channel(websocket)
     await websocket.send_text(f'You are {websocket} with new channel {channel_id}')
     
     try:
@@ -156,7 +118,7 @@ async def websocket_endpoint(websocket):
             _ = await websocket.receive_text()
     except WebSocketDisconnect:
         pass
-    await remove_sock_from_channel(channel, websocket)
+    await channel.remove_sock_from_channel(websocket)
 
 
 if __name__ == '__main__':

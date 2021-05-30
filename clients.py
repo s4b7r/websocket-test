@@ -1,8 +1,9 @@
 from uuid import uuid4
 from starlette.websockets import WebSocketDisconnect
 import json
-from channels import Channel
 import warnings
+
+from channels import Channel, ChannelFullError
 
 
 class Client:
@@ -36,8 +37,11 @@ class Client:
 
     async def assign_channel(self, channel):
         self.channel = channel
-        await channel.add_sock_to_channel(self)
-        await self.sock.send_json({'k': 'your_channel_id', 'v': channel.get_channel_id()})
+        try:
+            await channel.add_sock_to_channel(self)
+            await self.sock.send_json({'k': 'your_channel_id', 'v': channel.get_channel_id()})
+        except ChannelFullError:
+            await self.sock.send_json({'k': 'channel_full', 'v': self.id})
     
     async def receive_handler(self, msg):
         print(f'From {self} received {msg}')

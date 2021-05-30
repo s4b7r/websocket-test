@@ -39,6 +39,10 @@ template = """\
                     document.getElementById('channel_id').value = msg.v;
                 } else if (msg.k === "their_choice") {
                     document.getElementById('their_choice').value = msg.v.their_choice;
+                } else if (msg.k === "channel_full") {
+                    document.getElementById('channel_id').value = "CHANNEL FULL";
+                    socket.close()
+                    document.getElementById('status').textContent = `Disconnected`;
                 }
             };
             socket.onclose = function() { 

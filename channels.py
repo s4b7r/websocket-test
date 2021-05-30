@@ -45,9 +45,16 @@ class Channel:
         return self.id
 
     async def add_sock_to_channel(self, websocket):
+        if len(self.socks) >= 2:
+            raise ChannelFullError()
+
         self.socks.append(websocket)
         print(f'{self} got new {websocket}')
         await self.send_to_channel_json({'k': 'client_joined_channel', 'v': websocket.to_json()})
 
     def __repr__(self) -> str:
         return f'channel {self.id}'
+
+
+class ChannelFullError(Exception):
+    pass

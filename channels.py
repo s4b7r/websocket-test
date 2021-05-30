@@ -26,7 +26,7 @@ class Channel:
             del self.parent[chanid]
         
         close = websocket.close()
-        send = self.send_to_channel(f'{websocket} left your channel')
+        send = self.send_to_channel(f'{websocket} left {self}')
         return asyncio.gather(close, send, return_exceptions=True)
 
     @staticmethod
@@ -34,6 +34,7 @@ class Channel:
         id = str(uuid4())
         channel = Channel(channels_list, id=id)
         channels_list[id] = channel
+        print(f'New {channel}')
         return channel
 
     def get_channel_id(self):
@@ -41,6 +42,7 @@ class Channel:
 
     def add_sock_to_channel(self, websocket):
         self.socks.append(websocket)
+        print(f'{self} got new {websocket}')
 
     def __repr__(self) -> str:
         return f'channel {self.id}'

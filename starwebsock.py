@@ -13,6 +13,7 @@ import asyncio
 import starlette
 
 from channels import Channel
+from clients import Client
 
 
 template = """\
@@ -30,7 +31,13 @@ template = """\
             };
             socket.onmessage = (event) => {
                 console.log(event.data);
-                document.getElementById('channel_id').value = event.data;
+                document.getElementById('last_message').value = event.data;
+                var msg = JSON.parse(event.data);
+                if (msg.k === "your_client_id") {
+                    document.getElementById('your_client_id').value = msg.v;
+                } else if (msg.k ==="your_channel_id" ) {
+                    document.getElementById('channel_id').value = msg.v;
+                }
             };
             socket.onclose = function() { 
                 console.log("Closing websocket channel");
@@ -69,6 +76,10 @@ template = """\
 <h1>Status: <span id="status">Disconnected</span></h1>
 <form id="connect_form">
     <input type="text" id="channel_id" placeholder="channel_id" style="width: 500px;" /><br>
+    <input type="text" id="your_client_id" placeholder="client id" style="width: 500px;" /><br>
+    <input type="text" id="your_choice" placeholder="your choice" style="width: 500px;" /><br>
+    <input type="text" id="their_choide" placeholder="<their choice>" readonly style="width: 500px;" /><br>
+    <input type="text" id="last_message" placeholder="<last message>" readonly style="width: 500px;" /><br>
     <button type="submit">Connect</button>
     <button type="button" id="disconnect_button">Disconnect</button>
 </form>
@@ -89,23 +100,27 @@ async def homepage(request):
 
 @app.websocket_route('/ws/{channel_id}')
 async def websocket_endpoint(websocket):
+    await websocket.accept()
+    client = Client(websocket)
+    await client.init_id()
+    
     channel_id = websocket.path_params.get('channel_id')
     channel = channels.get(channel_id)
-    print(f'New {websocket} to {channel}')
-    await websocket.accept()
     channel.add_sock_to_channel(websocket)
-    await channel.send_to_channel(f'New {websocket} to {channel}')
+    await client.assign_channel(channel)
+    
     await sock_receive_loop(websocket, channel)
 
 
 @app.websocket_route('/ws/')
 async def websocket_endpoint(websocket):
-    channel = Channel.get_new_channel(channels)
-    channel_id = channel.get_channel_id()
-    print(f'New {channel} from {websocket}')
     await websocket.accept()
+    client = Client(websocket)
+    await client.init_id()
+    
+    channel = Channel.get_new_channel(channels)
     channel.add_sock_to_channel(websocket)
-    await websocket.send_text(f'You are {websocket} with new {channel}')
+    await client.assign_channel(channel)
     await sock_receive_loop(websocket, channel)
 
 

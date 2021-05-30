@@ -111,10 +111,10 @@ async def remove_sock_from_channel(channel, websocket):
 @app.websocket_route('/ws/{channel_id}')
 async def websocket_endpoint(websocket):
     channel_id = websocket.path_params.get('channel_id')
+    channel = channels.get(channel_id)
     print(f'New {websocket} to {channel_id}')
     await websocket.accept()
-    channel = channels.get(channel_id)
-    channel.append(websocket)
+    add_sock_to_channel(channel, websocket)
     await send_to_channel(channel, f'New {websocket} to channel {channel_id}')
     
     try:
@@ -125,13 +125,30 @@ async def websocket_endpoint(websocket):
     await remove_sock_from_channel(channel, websocket)
 
 
+def get_new_channel():
+    channel = []
+    channels[str(uuid4())] = channel
+    return channel
+
+
+def get_channel_id(channel):
+    for id, chan in channels.items():
+        if chan == channel:
+            return id
+    raise RuntimeError(f'Did not find that channel in channels dict')
+
+
+def add_sock_to_channel(channel, websocket):
+    channel.append(websocket)
+
+
 @app.websocket_route('/ws/')
 async def websocket_endpoint(websocket):
-    channel_id = str(uuid4())
+    channel = get_new_channel()
+    channel_id = get_channel_id(channel)
     print(f'New channel {channel_id} from {websocket}')
     await websocket.accept()
-    channel = [websocket]
-    channels[channel_id] = channel
+    add_sock_to_channel(channel, websocket)
     await websocket.send_text(f'You are {websocket} with new channel {channel_id}')
     
     try:

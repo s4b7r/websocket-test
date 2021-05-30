@@ -79,6 +79,8 @@ class Channel:
                                                                             'their_choice': others_choice
                                                                             }
                                                 })
+            print(f'{self} resets choice pair')
+            self.choice_pair = {}
 
 
 class ChannelFullError(Exception):

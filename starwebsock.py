@@ -9,6 +9,7 @@ from starlette.websockets import WebSocket, WebSocketDisconnect
 from jinja2 import Template
 import uvicorn
 from uuid import uuid4
+import asyncio
 
 
 template = """\
@@ -83,6 +84,13 @@ async def homepage(request):
     return HTMLResponse(Template(template).render())
 
 
+async def send_to_connection(connection, text):
+    sends = []
+    for ws in connection:
+        sends.append(ws.send_text(text))
+    return asyncio.gather(*sends)
+
+
 @app.websocket_route('/ws/{connection_id}')
 async def websocket_endpoint(websocket):
     connection_id = websocket.path_params.get('connection_id')
@@ -90,8 +98,7 @@ async def websocket_endpoint(websocket):
     await websocket.accept()
     connection = connections.get(connection_id)
     connection.append(websocket)
-    for ws in connection:
-        await ws.send_text(f'New {websocket} to connection {connection_id}')
+    await send_to_connection(connection, f'New {websocket} to connection {connection_id}')
     try:
         while True:
             _ = await websocket.receive_text()
@@ -101,8 +108,7 @@ async def websocket_endpoint(websocket):
     if len(connection) == 0:
         del connections[connection_id]
     await websocket.close()
-    for ws in connection:
-        await ws.send_text(f'{websocket} left connection {connection_id}')
+    await send_to_connection(connection, f'{websocket} left connection {connection_id}')
 
 
 @app.websocket_route('/ws/')
@@ -122,8 +128,7 @@ async def websocket_endpoint(websocket):
     if len(connection) == 0:
         del connections[connection_id]
     await websocket.close()
-    for ws in connection:
-        await ws.send_text(f'{websocket} left connection {connection_id}')
+    await send_to_connection(connection, f'{websocket} left connection {connection_id}')
 
 
 if __name__ == '__main__':

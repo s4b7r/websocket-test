@@ -6,13 +6,14 @@
 <body>
     <h1>Status: <span id="status">Disconnected</span></h1>
     <form id="connect_form">
-        <input type="text" id="channel_id" placeholder="channel_id" style="width: 500px;" /><br>
-        <input type="text" id="your_client_id" placeholder="client id" style="width: 500px;" /><br>
+        <input type="hidden" id="base_url" style="width: 500px;" readonly value="{{ url_for('homepage') }}" /><br>
+        <input type="text" id="channel_id" placeholder="channel_id" style="width: 500px;" readonly value="{{ ch }}" /><br>
+        <input type="text" id="your_client_id" placeholder="client id" style="width: 500px;" readonly value="{{ cl }}" /><br>
         <input type="text" id="your_choice" placeholder="your choice" style="width: 500px;" /><br>
         <input type="text" id="their_choice" placeholder="<their choice>" readonly style="width: 500px;" /><br>
         <input type="text" id="last_message" placeholder="<last message>" readonly style="width: 500px;" /><br>
-        <button type="submit">Connect</button>
-        <button type="button" id="disconnect_button">Disconnect</button>
+        <!--<button type="submit">Connect</button>-->
+        <!--<button type="button" id="disconnect_button">Disconnect</button>-->
         <button type="button" id="send_choice">Send choice</button>
     </form>
 </body>

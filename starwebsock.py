@@ -29,9 +29,16 @@ routes = [
 app = Starlette(routes=routes)
 
 
+@app.route('/{channel_id}/{client_id}')
+@app.route('/{channel_id}')
 @app.route('/')
 async def homepage(request):
-    return templates.TemplateResponse('index.html', {'request': request})
+    return templates.TemplateResponse('index.html', {
+                                                    'request': request, 
+                                                    'ch': request.path_params.get('channel_id'),
+                                                    'cl': request.path_params.get('client_id')
+                                                    }
+                                    )
 
 
 def get_existing_or_new_channel(channel_id):

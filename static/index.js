@@ -1,3 +1,12 @@
+let channel_id;
+let client_id;
+let base_url;
+
+const updateLinks = () => {
+    document.getElementById('channel_id').value = base_url + channel_id;
+    document.getElementById('your_client_id').value = base_url + channel_id + '/' + client_id;
+};
+
 const createSocket = (channel_url) => {
     const socket = new WebSocket(channel_url);
     
@@ -9,9 +18,11 @@ const createSocket = (channel_url) => {
         document.getElementById('last_message').value = event.data;
         var msg = JSON.parse(event.data);
         if (msg.k === "your_client_id") {
-            document.getElementById('your_client_id').value = msg.v;
+            client_id = msg.v;
+            updateLinks();
         } else if (msg.k ==="your_channel_id" ) {
-            document.getElementById('channel_id').value = msg.v;
+            channel_id = msg.v;
+            updateLinks();
         } else if (msg.k === "their_choice") {
             document.getElementById('their_choice').value = msg.v.their_choice;
         } else if (msg.k === "channel_full") {
@@ -44,15 +55,20 @@ document.addEventListener("DOMContentLoaded", () => {
     let socket;
 
     const form = document.getElementById('connect_form');
-    form.addEventListener('submit', (event) => {
-        event.preventDefault();
+    // form.addEventListener('submit', (event) => {
+        // event.preventDefault();
         if (socket) {
             disconnectSocket(socket);
         }
-        var channel_id = String(document.getElementById('channel_id').value);
-        var client_id = String(document.getElementById('your_client_id').value);
+        base_url = String(document.getElementById('base_url').value);
+        channel_id = String(document.getElementById('channel_id').value);
+        if (channel_id === "None") channel_id = '';
+        client_id = String(document.getElementById('your_client_id').value);
+        if (client_id === "None") client_id = '';
+        updateLinks();
         socket = createSocket("ws://localhost:8000/ws/" + channel_id + "/" + client_id);;
-    });
+    // });
+
     const sendChoiceButton = document.getElementById('send_choice');
     sendChoiceButton.addEventListener('click', () => sendChoice(socket));
 

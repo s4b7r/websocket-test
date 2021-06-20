@@ -9,22 +9,22 @@ class Channel:
         self.id = id
         self.choice_pair = {}
 
-    async def send_to_channel_json(self, json):
+    def send_to_channel_json(self, json):
         sends = []
         for ws in self.socks:
             sends.append(ws.websocket.send_json(json))
         return asyncio.gather(*sends)
 
-    async def send_to_channel(self, text):
+    def send_to_channel(self, text):
         return self.send_to_channel_text(text)
 
-    async def send_to_channel_text(self, text):
+    def send_to_channel_text(self, text):
         sends = []
         for ws in self.socks:
             sends.append(ws.websocket.send_text(text))
         return asyncio.gather(*sends)
 
-    async def remove_sock_from_channel(self, websocket):
+    def remove_sock_from_channel(self, websocket):
         self.socks.remove(websocket)
 
         if len(self.socks) == 0:

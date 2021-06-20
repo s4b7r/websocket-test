@@ -1,19 +1,29 @@
 <!DOCTYPE HTML>
 <html>
 <head>
-    <script src="static/index.js"></script>
+    <script src="{{ url_for('homepage') }}static/index.js"></script>
+    <script>
+        base_url = "{{ url_for('homepage') }}";
+        channel_id = "{{ channel_id }}";
+        client_id = "{{ client_id }}";
+    </script>
+    <style>
+        .choice_link :hover {
+            border-style: dotted;
+        }
+    </style>
 </head>
 <body>
     <h1>Status: <span id="status">Disconnected</span></h1>
     <form id="connect_form">
-        <input type="hidden" id="base_url" style="width: 500px;" readonly value="{{ url_for('homepage') }}" /><br>
-        <input type="text" id="channel_id" placeholder="channel_id" style="width: 500px;" readonly value="{{ ch }}" /><br>
-        <input type="text" id="your_client_id" placeholder="client id" style="width: 500px;" readonly value="{{ cl }}" /><br>
+        Give this link to your opponent: <a href="" id="channel_id"></a><br>
+        Use this link to rejoin yourself: <a href="" id="your_client_id"></a><br>
         <input type="text" id="your_choice" placeholder="your choice" style="width: 500px;" /><br>
+        <a href="" id="choice_stone" class="choice_link" ><img src="{{ url_for('homepage') }}static/stone.bmp" /></a>
+        <a href="" id="choice_paper" class="choice_link" ><img src="{{ url_for('homepage') }}static/paper.bmp" /></a>
+        <a href="" id="choice_scissors" class="choice_link" ><img src="{{ url_for('homepage') }}static/scissors.bmp" /></a><br>
         <input type="text" id="their_choice" placeholder="<their choice>" readonly style="width: 500px;" /><br>
         <input type="text" id="last_message" placeholder="<last message>" readonly style="width: 500px;" /><br>
-        <!--<button type="submit">Connect</button>-->
-        <!--<button type="button" id="disconnect_button">Disconnect</button>-->
         <button type="button" id="send_choice">Send choice</button>
     </form>
 </body>

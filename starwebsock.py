@@ -35,8 +35,8 @@ app = Starlette(routes=routes)
 async def homepage(request):
     return templates.TemplateResponse('index.html', {
                                                     'request': request, 
-                                                    'ch': request.path_params.get('channel_id'),
-                                                    'cl': request.path_params.get('client_id')
+                                                    'channel_id': request.path_params.get('channel_id'),
+                                                    'client_id': request.path_params.get('client_id')
                                                     }
                                     )
 

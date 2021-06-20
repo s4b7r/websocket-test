@@ -1,10 +1,13 @@
 let channel_id;
 let client_id;
 let base_url;
+let my_choice;
 
 const updateLinks = () => {
-    document.getElementById('channel_id').value = base_url + channel_id;
-    document.getElementById('your_client_id').value = base_url + channel_id + '/' + client_id;
+    document.getElementById('channel_id').href = base_url + channel_id;
+    document.getElementById('channel_id').innerText = base_url + channel_id;
+    document.getElementById('your_client_id').href = base_url + channel_id + '/' + client_id;
+    document.getElementById('your_client_id').innerText = base_url + channel_id + '/' + client_id;
 };
 
 const createSocket = (channel_url) => {
@@ -47,31 +50,41 @@ const disconnectSocket = (socket) => {
 };
 
 const sendChoice = (socket) => {
-    var my_choice = document.getElementById('your_choice').value;
     socket.send(JSON.stringify({'k': 'my_choice', 'v': my_choice}));
 }
 
+const sendChoiceButton = (label, socket) => {
+    my_choice = label;
+    sendChoice(socket);
+}
+
 document.addEventListener("DOMContentLoaded", () => {
-    let socket;
+    var socket;
 
-    const form = document.getElementById('connect_form');
-    // form.addEventListener('submit', (event) => {
-        // event.preventDefault();
-        if (socket) {
-            disconnectSocket(socket);
-        }
-        base_url = String(document.getElementById('base_url').value);
-        channel_id = String(document.getElementById('channel_id').value);
-        if (channel_id === "None") channel_id = '';
-        client_id = String(document.getElementById('your_client_id').value);
-        if (client_id === "None") client_id = '';
-        updateLinks();
-        socket = createSocket("ws://localhost:8000/ws/" + channel_id + "/" + client_id);;
-    // });
-
-    const sendChoiceButton = document.getElementById('send_choice');
-    sendChoiceButton.addEventListener('click', () => sendChoice(socket));
-
-    const disconnectButton = document.getElementById('disconnect_button');
-    disconnectButton.addEventListener('click', () => disconnectSocket(socket));
+    if (socket) {
+        disconnectSocket(socket);
+    }
+    if (channel_id === "None") channel_id = '';
+    if (client_id === "None") client_id = '';
+    updateLinks();
+    socket = createSocket("ws://localhost:8000/ws/" + channel_id + "/" + client_id);;
+    
+    const choiceLinkStone = document.getElementById('choice_stone');
+    choiceLinkStone.addEventListener('click', (event) => {
+        console.log(event);
+        event.preventDefault();
+        sendChoiceButton('stone', socket);
+        });
+    const choiceLinkPaper = document.getElementById('choice_paper');
+    choiceLinkPaper.addEventListener('click', (event) => {
+        console.log(event);
+        event.preventDefault();
+        sendChoiceButton('paper', socket);
+        });
+    const choiceLinkScissors = document.getElementById('choice_scissors');
+    choiceLinkScissors.addEventListener('click', (event) => {
+        console.log(event);
+        event.preventDefault();
+        sendChoiceButton('scissors', socket);
+        });
 });

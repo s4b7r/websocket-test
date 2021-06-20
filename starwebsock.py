@@ -12,15 +12,21 @@ from uuid import uuid4
 import asyncio
 import starlette
 from starlette.templating import Jinja2Templates
+from starlette.routing import Mount, Route
+from starlette.staticfiles import StaticFiles
 
 from channels import Channel
 from clients import Client
 
 
-app = Starlette()
-templates = Jinja2Templates(directory='templates')
-
 channels = {}
+
+templates = Jinja2Templates(directory='templates')
+routes = [
+        # Route('/', endpoint=homepage),
+        Mount('/static', app=StaticFiles(directory='static'), name="static"),
+        ]
+app = Starlette(routes=routes)
 
 
 @app.route('/')

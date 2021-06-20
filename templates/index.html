@@ -11,6 +11,22 @@
         .choice_link :hover {
             border-style: dotted;
         }
+        .choice_div {
+            display: inline-block;
+            /* width: fit-content;
+            height: fit-content; */
+        }
+        .locked_choice_div {
+            background-color: yellow;
+            /* display: inline-block; */
+        }
+        .locked_nonchoice_div {
+            background-color: black;
+            /* display: inline-block; */
+        }
+        .locked_link {
+            opacity: .5;
+        }
     </style>
 </head>
 <body>
@@ -19,12 +35,24 @@
         Give this link to your opponent: <a href="" id="channel_id"></a><br>
         Use this link to rejoin yourself: <a href="" id="your_client_id"></a><br>
         <input type="text" id="your_choice" placeholder="your choice" style="width: 500px;" /><br>
-        <a href="" id="choice_stone" class="choice_link" ><img src="{{ url_for('homepage') }}static/stone.bmp" /></a>
-        <a href="" id="choice_paper" class="choice_link" ><img src="{{ url_for('homepage') }}static/paper.bmp" /></a>
-        <a href="" id="choice_scissors" class="choice_link" ><img src="{{ url_for('homepage') }}static/scissors.bmp" /></a><br>
+        <div class="choice_div" id="choice_stone_div" >
+            <a href="" id="choice_stone" class="choice_link" >
+                <img src="{{ url_for('homepage') }}static/stone.bmp" />
+            </a>
+        </div>
+        <div class="choice_div" id="choice_paper_div" >
+            <a href="" id="choice_paper" class="choice_link" >
+                <img src="{{ url_for('homepage') }}static/paper.bmp" />
+            </a>
+        </div>
+        <div class="choice_div" id="choice_scissors_div" >
+            <a href="" id="choice_scissors" class="choice_link" >
+                <img src="{{ url_for('homepage') }}static/scissors.bmp" />
+            </a>
+        </div><br>
         <input type="text" id="their_choice" placeholder="<their choice>" readonly style="width: 500px;" /><br>
         <input type="text" id="last_message" placeholder="<last message>" readonly style="width: 500px;" /><br>
-        <button type="button" id="send_choice">Send choice</button>
+        <button type="button" id="send_choice">Send choice</button><br>
     </form>
 </body>
 </html>

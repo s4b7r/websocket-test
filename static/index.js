@@ -53,38 +53,44 @@ const sendChoice = (socket) => {
     socket.send(JSON.stringify({'k': 'my_choice', 'v': my_choice}));
 }
 
-const sendChoiceButton = (label, socket) => {
+const sendChoiceButton = (event, socket, label) => {
+    event.preventDefault();
+
+    for (const choice_label of Object.keys(choices)) {
+        let choice = choices[choice_label];
+        choice['a'].classList.add('locked_link');
+        if (choice_label === label) choice['div'].classList.add('locked_choice_div')
+        else choice['div'].classList.add('locked_nonchoice_div')
+    }
+
     my_choice = label;
     sendChoice(socket);
 }
 
-document.addEventListener("DOMContentLoaded", () => {
-    var socket;
+var choices = {};
 
-    if (socket) {
-        disconnectSocket(socket);
-    }
+document.addEventListener("DOMContentLoaded", () => {
+    choices['stone'] = {};
+    choices['stone']['div'] = choice_div_stone = document.getElementById('choice_stone_div');
+    choices['stone']['a'] = choice_div_stone = document.getElementById('choice_stone');
+    choices['paper'] = {};
+    choices['paper']['div'] = choice_div_paper = document.getElementById('choice_paper_div');
+    choices['paper']['a'] = choice_div_paper = document.getElementById('choice_paper');
+    choices['scissors'] = {};
+    choices['scissors']['div'] = choice_div_scissors = document.getElementById('choice_scissors_div');
+    choices['scissors']['a'] = choice_div_scissors = document.getElementById('choice_scissors');
+    
     if (channel_id === "None") channel_id = '';
     if (client_id === "None") client_id = '';
     updateLinks();
+    
+    var socket;
+    if (socket) {
+        disconnectSocket(socket);
+    }
     socket = createSocket("ws://localhost:8000/ws/" + channel_id + "/" + client_id);;
     
-    const choiceLinkStone = document.getElementById('choice_stone');
-    choiceLinkStone.addEventListener('click', (event) => {
-        console.log(event);
-        event.preventDefault();
-        sendChoiceButton('stone', socket);
-        });
-    const choiceLinkPaper = document.getElementById('choice_paper');
-    choiceLinkPaper.addEventListener('click', (event) => {
-        console.log(event);
-        event.preventDefault();
-        sendChoiceButton('paper', socket);
-        });
-    const choiceLinkScissors = document.getElementById('choice_scissors');
-    choiceLinkScissors.addEventListener('click', (event) => {
-        console.log(event);
-        event.preventDefault();
-        sendChoiceButton('scissors', socket);
-        });
+    choices['stone']['a'].addEventListener('click', (event) => sendChoiceButton(event, socket, 'stone'));
+    choices['paper']['a'].addEventListener('click', (event) => sendChoiceButton(event, socket, 'paper'));
+    choices['scissors']['a'].addEventListener('click', (event) => sendChoiceButton(event, socket, 'scissors'));
 });

@@ -113,16 +113,28 @@ async def homepage(request):
     return HTMLResponse(Template(template).render())
 
 
+def get_existing_or_new_channel(channel_id):
+    try:
+        channel = channels[channel_id]
+    except KeyError:
+        channel = incoming_connection_creates_new_channel(channels)
+    return channel
+
+
 @app.websocket_route('/ws/{channel_id}/{client_id}')
 async def websocket_endpoint(websocket):
     known_id = websocket.path_params.get('client_id')
     client = await client_init(websocket, known_id)
 
     channel_id = websocket.path_params.get('channel_id')
-    channel = channels.get(channel_id)
+    channel = get_existing_or_new_channel(channel_id)
 
     await client.assign_channel(channel)
     await client.receive_loop()
+
+
+def incoming_connection_creates_new_channel(channel_id):
+    return Channel.get_new_channel(channel_id)
 
 
 @app.websocket_route('/ws/{channel_id}/')
@@ -130,7 +142,7 @@ async def websocket_endpoint(websocket):
     client = await client_init(websocket)
 
     channel_id = websocket.path_params.get('channel_id')
-    channel = channels.get(channel_id)
+    channel = get_existing_or_new_channel(channel_id)
 
     await client.assign_channel(channel)
     await client.receive_loop()
@@ -140,7 +152,7 @@ async def websocket_endpoint(websocket):
 async def websocket_endpoint(websocket):
     client = await client_init(websocket)
     
-    channel = Channel.get_new_channel(channels)
+    channel = incoming_connection_creates_new_channel(channels)
 
     await client.assign_channel(channel)
     await client.receive_loop()

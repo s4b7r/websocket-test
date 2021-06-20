@@ -61,26 +61,27 @@ class Channel:
         await self.send_choice_pair_on_complete()
 
     async def send_choice_pair_on_complete(self):
-        for client in self.socks:
-            if client not in self.choice_pair:
-                print(f'{client} not in channels choice pair')
-                break
-            print(f'{client} is in channels choice pair')
-        else:
+        if len(self.socks) == 2:
             for client in self.socks:
-                print(f'sending choice pair to {client}')
-                for other in self.socks:
-                    if other != client:
-                        break
-                others_choice = self.choice_pair[other]
-                print(f'partner of {client} is {other} with choice {others_choice}')
-                await client.websocket.send_json({'k': 'their_choice', 'v': {
-                                                                            'their_client': other.id,
-                                                                            'their_choice': others_choice
-                                                                            }
-                                                })
-            print(f'{self} resets choice pair')
-            self.choice_pair = {}
+                if client not in self.choice_pair:
+                    print(f'{client} not in channels choice pair')
+                    break
+                print(f'{client} is in channels choice pair')
+            else:
+                for client in self.socks:
+                    print(f'sending choice pair to {client}')
+                    for other in self.socks:
+                        if other != client:
+                            break
+                    others_choice = self.choice_pair[other]
+                    print(f'partner of {client} is {other} with choice {others_choice}')
+                    await client.websocket.send_json({'k': 'their_choice', 'v': {
+                                                                                'their_client': other.id,
+                                                                                'their_choice': others_choice
+                                                                                }
+                                                    })
+                print(f'{self} resets choice pair')
+                self.choice_pair = {}
 
 
 class ChannelFullError(Exception):

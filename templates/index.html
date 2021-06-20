@@ -13,8 +13,6 @@
         }
         .choice_div {
             display: inline-block;
-            /* width: fit-content;
-            height: fit-content; */
         }
         .locked_choice_div {
             background-color: yellow;
@@ -31,28 +29,37 @@
 </head>
 <body>
     <h1>Status: <span id="status">Disconnected</span></h1>
-    <form id="connect_form">
-        Give this link to your opponent: <a href="" id="channel_id"></a><br>
-        Use this link to rejoin yourself: <a href="" id="your_client_id"></a><br>
-        <input type="text" id="your_choice" placeholder="your choice" style="width: 500px;" /><br>
-        <div class="choice_div" id="choice_stone_div" >
-            <a href="" id="choice_stone" class="choice_link" >
-                <img src="{{ url_for('homepage') }}static/stone.bmp" />
-            </a>
-        </div>
-        <div class="choice_div" id="choice_paper_div" >
-            <a href="" id="choice_paper" class="choice_link" >
-                <img src="{{ url_for('homepage') }}static/paper.bmp" />
-            </a>
-        </div>
-        <div class="choice_div" id="choice_scissors_div" >
-            <a href="" id="choice_scissors" class="choice_link" >
-                <img src="{{ url_for('homepage') }}static/scissors.bmp" />
-            </a>
-        </div><br>
-        <input type="text" id="their_choice" placeholder="<their choice>" readonly style="width: 500px;" /><br>
-        <input type="text" id="last_message" placeholder="<last message>" readonly style="width: 500px;" /><br>
-        <button type="button" id="send_choice">Send choice</button><br>
-    </form>
+
+    Give this link to your opponent: <a href="" id="channel_id"></a><br>
+    Use this link to rejoin yourself: <a href="" id="your_client_id"></a><br>
+    
+    Make your choice:
+    <div class="choice_div" id="choice_stone_div" >
+        <a href="#" id="choice_stone" class="choice_link" >
+            <img src="{{ url_for('homepage') }}static/stone.bmp" />
+        </a>
+    </div>
+    <div class="choice_div" id="choice_paper_div" >
+        <a href="#" id="choice_paper" class="choice_link" >
+            <img src="{{ url_for('homepage') }}static/paper.bmp" />
+        </a>
+    </div>
+    <div class="choice_div" id="choice_scissors_div" >
+        <a href="#" id="choice_scissors" class="choice_link" >
+            <img src="{{ url_for('homepage') }}static/scissors.bmp" />
+        </a>
+    </div><br>
+    
+    Your opponent chose:
+    <div class="choice_div" id="their_choice_stone_div" >
+        <img src="{{ url_for('homepage') }}static/stone.bmp" />
+    </div>
+    <div class="choice_div" id="their_choice_paper_div" >
+        <img src="{{ url_for('homepage') }}static/paper.bmp" />
+    </div>
+    <div class="choice_div" id="their_choice_scissors_div" >
+        <img src="{{ url_for('homepage') }}static/scissors.bmp" />
+    </div><br>
+        
 </body>
 </html>

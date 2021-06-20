@@ -10,6 +10,15 @@ const updateLinks = () => {
     document.getElementById('your_client_id').innerText = base_url + channel_id + '/' + client_id;
 };
 
+const processTheirChoice = (their_choice) => {
+    for (const choice_label of Object.keys(their_choices)) {
+        let choice = their_choices[choice_label];
+        choice['a'].classList.add('locked_link');
+        if (choice_label === their_choice) choice['div'].classList.add('locked_choice_div')
+        else choice['div'].classList.add('locked_nonchoice_div')
+    }
+}
+
 const createSocket = (channel_url) => {
     const socket = new WebSocket(channel_url);
     
@@ -18,7 +27,6 @@ const createSocket = (channel_url) => {
     };
     socket.onmessage = (event) => {
         console.log(event.data);
-        document.getElementById('last_message').value = event.data;
         var msg = JSON.parse(event.data);
         if (msg.k === "your_client_id") {
             client_id = msg.v;
@@ -27,7 +35,7 @@ const createSocket = (channel_url) => {
             channel_id = msg.v;
             updateLinks();
         } else if (msg.k === "their_choice") {
-            document.getElementById('their_choice').value = msg.v.their_choice;
+            processTheirChoice(msg.v.their_choice);
         } else if (msg.k === "channel_full") {
             document.getElementById('channel_id').value = "CHANNEL FULL";
             socket.close()
@@ -68,17 +76,29 @@ const sendChoiceButton = (event, socket, label) => {
 }
 
 var choices = {};
+var their_choices = {};
 
 document.addEventListener("DOMContentLoaded", () => {
     choices['stone'] = {};
-    choices['stone']['div'] = choice_div_stone = document.getElementById('choice_stone_div');
-    choices['stone']['a'] = choice_div_stone = document.getElementById('choice_stone');
+    choices['stone']['div'] = document.getElementById('choice_stone_div');
+    choices['stone']['a'] = document.getElementById('choice_stone');
     choices['paper'] = {};
-    choices['paper']['div'] = choice_div_paper = document.getElementById('choice_paper_div');
-    choices['paper']['a'] = choice_div_paper = document.getElementById('choice_paper');
+    choices['paper']['div'] = document.getElementById('choice_paper_div');
+    choices['paper']['a'] = document.getElementById('choice_paper');
     choices['scissors'] = {};
-    choices['scissors']['div'] = choice_div_scissors = document.getElementById('choice_scissors_div');
-    choices['scissors']['a'] = choice_div_scissors = document.getElementById('choice_scissors');
+    choices['scissors']['div'] =  document.getElementById('choice_scissors_div');
+    choices['scissors']['a'] =  document.getElementById('choice_scissors');
+    
+    their_choices['stone'] = {};
+    their_choices['stone']['div'] = document.getElementById('their_choice_stone_div');
+    their_choices['stone']['a'] = their_choices['stone']['div'].childNodes[1];
+    console.log(their_choices['stone']['a']);
+    their_choices['paper'] = {};
+    their_choices['paper']['div']  = document.getElementById('their_choice_paper_div');
+    their_choices['paper']['a'] = their_choices['paper']['div'].childNodes[1];
+    their_choices['scissors'] = {};
+    their_choices['scissors']['div'] = document.getElementById('their_choice_scissors_div');
+    their_choices['scissors']['a'] = their_choices['scissors']['div'].childNodes[1];
     
     if (channel_id === "None") channel_id = '';
     if (client_id === "None") client_id = '';
